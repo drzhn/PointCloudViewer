@@ -1,9 +1,6 @@
 [submodule "ThirdParty/rapidjson"]
 	path = ThirdParty/rapidjson
 	url = ../../Tencent/rapidjson.git
-[submodule "ThirdParty/imgui"]
-	path = ThirdParty/imgui
-	url = ../../ocornut/imgui.git
 [submodule "ThirdParty/DirectXMath"]
 	path = ThirdParty/DirectXMath
 	url = ../../microsoft/DirectXMath.git
