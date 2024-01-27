@@ -5,3 +5,7 @@
 	path = ThirdParty/DirectXMath
 	url = ../../microsoft/DirectXMath.git
 	branch = main
+[submodule "ThirdParty/imgui"]
+	path = ThirdParty/imgui
+	url = ../../ocornut/imgui.git
+	branch = master
