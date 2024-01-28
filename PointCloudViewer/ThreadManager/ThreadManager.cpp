@@ -2,8 +2,8 @@
 
 namespace PointCloudViewer
 {
-	void ThreadManager::Stop()
+	void ThreadManager::StopEngineThread()
 	{
-		m_worker.join();
+		m_engineThread.join();
 	}
 }

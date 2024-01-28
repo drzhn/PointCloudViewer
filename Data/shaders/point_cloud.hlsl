@@ -13,13 +13,6 @@ struct PSOutput
 ConstantBuffer<ViewProjectionMatrixData> viewProjectionData : register(b0);
 StructuredBuffer<Vertex> points : register(t0);
 
-inline float4 ComputeNonStereoScreenPos(float4 pos) {
-	float4 o = pos * 0.5f;
-	o.xy = float2(o.x, o.y * -1) + o.w;
-	o.zw = pos.zw;
-	return o;
-}
-
 PSInput VSMain(uint id : SV_VertexID)
 {
 	PSInput result;

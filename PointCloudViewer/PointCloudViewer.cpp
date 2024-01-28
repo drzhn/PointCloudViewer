@@ -77,7 +77,7 @@ namespace PointCloudViewer
 	{
 		m_worldManager->Start();
 
-		m_threadManager->StartTask(&PointCloudViewer::UpdateTask, this);
+		m_threadManager->StartEngineThread(&PointCloudViewer::UpdateTask, this);
 	}
 
 	void PointCloudViewer::UpdateTask() const noexcept
@@ -93,7 +93,7 @@ namespace PointCloudViewer
 	void PointCloudViewer::Stop() const noexcept
 	{
 		g_finishFlag = true;
-		m_threadManager->Stop();
+		m_threadManager->StopEngineThread();
 
 		m_worldManager->Stop(); // unregister mesh renderers, remove descriptor set, pipelines, pipeline layouts
 	}
