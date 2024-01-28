@@ -17,7 +17,6 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -53,27 +52,32 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="Shared" >
+  <ImportGroup Label="Shared">
   </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)\Build\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\Temp\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)\Build\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)\Temp\$(Configuration)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -106,12 +110,16 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;ENGINE;NOMINMAX;GRAPHICS_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\imgui;$(SolutionDir)PointCloudViewer;$(SolutionDir)ThirdParty\dxc;$(SolutionDir)ThirdParty\pixruntime\Include;$(SolutionDir)ThirdParty\DirectXMath\Inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;Shlwapi.lib;$(SolutionDir)ThirdParty\pixruntime\bin\x64\WinPixEventRuntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -120,18 +128,132 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;ENGINE;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\imgui;$(SolutionDir)PointCloudViewer;$(SolutionDir)ThirdParty\dxc;$(SolutionDir)ThirdParty\pixruntime\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;Shlwapi.lib;$(SolutionDir)ThirdParty\pixruntime\bin\x64\WinPixEventRuntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-
-  <ItemGroup></ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="PointCloudViewer\Common\Allocators\LinearAllocator.cpp" />
+    <ClCompile Include="PointCloudViewer\Common\CameraUnit.cpp" />
+    <ClCompile Include="PointCloudViewer\Common\CommandQueue.cpp" />
+    <ClCompile Include="PointCloudViewer\Common\Math\MathTypes.cpp" />
+    <ClCompile Include="PointCloudViewer\Common\Time.cpp" />
+    <ClCompile Include="PointCloudViewer\Components\Camera.cpp" />
+    <ClCompile Include="PointCloudViewer\Components\Component.cpp" />
+    <ClCompile Include="PointCloudViewer\DataManager\DataManager.cpp" />
+    <ClCompile Include="PointCloudViewer\DescriptorManager\DescriptorManager.cpp" />
+    <ClCompile Include="PointCloudViewer\EngineDataProvider\EngineDataProvider.cpp" />
+    <ClCompile Include="PointCloudViewer\EngineDataProvider\MeshContainer.cpp" />
+    <ClCompile Include="PointCloudViewer\GameplayComponents\CameraBehaviour.cpp" />
+    <ClCompile Include="PointCloudViewer\GraphicsManager\GraphicsManager.cpp" />
+    <ClCompile Include="PointCloudViewer\InputManager\InputManager.cpp" />
+    <ClCompile Include="PointCloudViewer\main.cpp" />
+    <ClCompile Include="PointCloudViewer\MemoryManager\LinearMemoryAllocator.cpp" />
+    <ClCompile Include="PointCloudViewer\MemoryManager\MemoryManager.cpp" />
+    <ClCompile Include="PointCloudViewer\PointCloudViewer.cpp" />
+    <ClCompile Include="PointCloudViewer\RenderManager\ComputeDispatcher.cpp" />
+    <ClCompile Include="PointCloudViewer\RenderManager\GBuffer.cpp" />
+    <ClCompile Include="PointCloudViewer\RenderManager\PointCloudRenderer.cpp" />
+    <ClCompile Include="PointCloudViewer\RenderManager\Tonemapping.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Buffers\Buffer.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Buffers\ConstantCpuBuffer.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Buffers\DynamicCpuBuffer.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Buffers\UAVGpuBuffer.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Mesh.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Pipelines\AbstractPipelineObject.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Pipelines\ComputePipeline.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Pipelines\GraphicsPipeline.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Pipelines\RaytracingPipeline.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Pipelines\ShaderInputContainer.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\ResourceView.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Shader.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\ShaderCompiler.cpp" />
+    <ClCompile Include="PointCloudViewer\ResourceManager\Texture.cpp" />
+    <ClCompile Include="PointCloudViewer\SceneManager\GameObject.cpp" />
+    <ClCompile Include="PointCloudViewer\SceneManager\Transform.cpp" />
+    <ClCompile Include="PointCloudViewer\SceneManager\WorldManager.cpp" />
+    <ClCompile Include="PointCloudViewer\ThreadManager\LockFreeFlag.cpp" />
+    <ClCompile Include="PointCloudViewer\ThreadManager\ThreadManager.cpp" />
+    <ClCompile Include="PointCloudViewer\Utils\GraphicsUtils.cpp" />
+    <ClCompile Include="PointCloudViewer\Utils\Log.cpp" />
+    <ClCompile Include="PointCloudViewer\WindowHandler.cpp" />
+    <ClCompile Include="ThirdParty\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="ThirdParty\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="ThirdParty\imgui\imgui.cpp" />
+    <ClCompile Include="ThirdParty\imgui\imgui_demo.cpp" />
+    <ClCompile Include="ThirdParty\imgui\imgui_draw.cpp" />
+    <ClCompile Include="ThirdParty\imgui\imgui_tables.cpp" />
+    <ClCompile Include="ThirdParty\imgui\imgui_widgets.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PointCloudViewer\CommonEngineStructs.h" />
+    <ClInclude Include="PointCloudViewer\Common\Allocators\LinearAllocator.h" />
+    <ClInclude Include="PointCloudViewer\Common\Allocators\PoolAllocator.h" />
+    <ClInclude Include="PointCloudViewer\Common\CameraUnit.h" />
+    <ClInclude Include="PointCloudViewer\Common\CommandQueue.h" />
+    <ClInclude Include="PointCloudViewer\Common\HashDefs.h" />
+    <ClInclude Include="PointCloudViewer\Common\JoyObject.h" />
+    <ClInclude Include="PointCloudViewer\Common\Math\MathTypes.h" />
+    <ClInclude Include="PointCloudViewer\Common\Math\MathUtils.h" />
+    <ClInclude Include="PointCloudViewer\Common\Singleton.h" />
+    <ClInclude Include="PointCloudViewer\Common\Time.h" />
+    <ClInclude Include="PointCloudViewer\Components\Camera.h" />
+    <ClInclude Include="PointCloudViewer\Components\Component.h" />
+    <ClInclude Include="PointCloudViewer\d3dx12.h" />
+    <ClInclude Include="PointCloudViewer\DataManager\DataManager.h" />
+    <ClInclude Include="PointCloudViewer\DescriptorManager\DescriptorManager.h" />
+    <ClInclude Include="PointCloudViewer\EngineDataProvider\EngineDataProvider.h" />
+    <ClInclude Include="PointCloudViewer\EngineDataProvider\MeshContainer.h" />
+    <ClInclude Include="PointCloudViewer\GameplayComponents\CameraBehaviour.h" />
+    <ClInclude Include="PointCloudViewer\GraphicsManager\GraphicsManager.h" />
+    <ClInclude Include="PointCloudViewer\InputManager\InputManager.h" />
+    <ClInclude Include="PointCloudViewer\MemoryManager\LinearMemoryAllocator.h" />
+    <ClInclude Include="PointCloudViewer\MemoryManager\MemoryManager.h" />
+    <ClInclude Include="PointCloudViewer\PointCloudViewer.h" />
+    <ClInclude Include="PointCloudViewer\RenderManager\ComputeDispatcher.h" />
+    <ClInclude Include="PointCloudViewer\RenderManager\GBuffer.h" />
+    <ClInclude Include="PointCloudViewer\RenderManager\IRenderer.h" />
+    <ClInclude Include="PointCloudViewer\RenderManager\PointCloudRenderer.h" />
+    <ClInclude Include="PointCloudViewer\RenderManager\Tonemapping.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Buffers\Buffer.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Buffers\ConstantCpuBuffer.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Buffers\DynamicBufferPool.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Buffers\DynamicCpuBuffer.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Buffers\UAVGpuBuffer.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\DDS.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Mesh.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Pipelines\AbstractPipelineObject.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Pipelines\ComputePipeline.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Pipelines\GraphicsPipeline.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Pipelines\RaytracingPipeline.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Pipelines\ShaderInputContainer.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\ResourceView.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Shader.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\ShaderCompiler.h" />
+    <ClInclude Include="PointCloudViewer\ResourceManager\Texture.h" />
+    <ClInclude Include="PointCloudViewer\SceneManager\GameObject.h" />
+    <ClInclude Include="PointCloudViewer\SceneManager\Transform.h" />
+    <ClInclude Include="PointCloudViewer\SceneManager\WorldManager.h" />
+    <ClInclude Include="PointCloudViewer\ThreadManager\LockFreeFlag.h" />
+    <ClInclude Include="PointCloudViewer\ThreadManager\ThreadManager.h" />
+    <ClInclude Include="PointCloudViewer\Utils\Assert.h" />
+    <ClInclude Include="PointCloudViewer\Utils\BitUtils.h" />
+    <ClInclude Include="PointCloudViewer\Utils\FileUtils.h" />
+    <ClInclude Include="PointCloudViewer\Utils\GraphicsUtils.h" />
+    <ClInclude Include="PointCloudViewer\Utils\Log.h" />
+    <ClInclude Include="PointCloudViewer\Utils\TimeCounter.h" />
+    <ClInclude Include="PointCloudViewer\WindowHandler.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
