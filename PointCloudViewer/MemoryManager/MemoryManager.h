@@ -22,8 +22,6 @@ namespace PointCloudViewer
 
 		void PrintStats() const;
 
-		void Update();
-
 		void LoadDataToBuffer(
 			std::ifstream& stream,
 			uint64_t offset,

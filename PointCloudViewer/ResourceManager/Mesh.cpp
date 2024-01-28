@@ -40,13 +40,13 @@ namespace PointCloudViewer
 		m_vertexCount = vertexDataSize / sizeof(Vertex);
 		m_indexCount = indexDataSize / sizeof(Index);
 
-		MeshContainer* mc = EngineDataProvider::Get()->GetMeshContainer();
-
+		//MeshContainer* mc = EngineDataProvider::Get()->GetMeshContainer();
+/*
 		mc->CreateMeshView(vertexDataSize, indexDataSize, m_meshView);
 
 		MemoryManager::Get()->LoadDataToBuffer(m_verticesData, vertexDataSize, mc->GetVertexBuffer(), m_meshView.vertexBufferOffset);
 		MemoryManager::Get()->LoadDataToBuffer(m_indicesData, indexDataSize, mc->GetIndexBuffer(), m_meshView.indexBufferOffset);
-	}
+	*/}
 
 	Mesh::~Mesh()
 	{

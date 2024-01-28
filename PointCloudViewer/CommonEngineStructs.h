@@ -131,10 +131,8 @@ struct Color
 
 struct Vertex
 {
-	PACKED_HALF4 pos;
-	PACKED_RGB10A2_UNORM normal;
-	PACKED_RGB10A2_UNORM tangent;
-	VEC2 texCoord;
+	VEC4 position;
+	VEC4 color;
 };
 
 typedef UINT1 Index;

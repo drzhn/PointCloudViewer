@@ -9,8 +9,9 @@
 #include <dxgi1_6.h>
 #include <wrl.h>
 
+#include "ColorBuffer.h"
 #include "CommonEngineStructs.h"
-#include "RenderManager/GBuffer.h"
+#include "PointCloudHandler.h"
 #include "RenderManager/IRenderer.h"
 #include "Common/CommandQueue.h"
 #include "RenderManager/Tonemapping.h"
@@ -39,7 +40,7 @@ namespace PointCloudViewer
 
 		~PointCloudRenderer() override = default;
 
-		void Init();
+		void Init() override;
 
 		void Start() const override;
 
@@ -67,25 +68,11 @@ namespace PointCloudViewer
 		[[nodiscard]] const uint32_t GetCurrentFrameIndex() const noexcept override { return m_currentFrameIndex; }
 
 	private:
-		void RenderEntireSceneWithMaterials(
+		static void CopyRTVResource(
 			ID3D12GraphicsCommandList* commandList,
-			const ViewProjectionMatrixData* viewProjectionData
-		) const;
-
-		void RenderSceneForSharedMaterial(
-			ID3D12GraphicsCommandList* commandList,
-			const ViewProjectionMatrixData* viewProjectionData,
-			SharedMaterial* sharedMaterial
-		) const;
-
-		void RenderDeferredShading(
-			ID3D12GraphicsCommandList* commandList,
-			const AbstractGBuffer* gBuffer, 
-			const ViewProjectionMatrixData* cameraVP
-		) const;
-
-		static void CopyRTVResource(ID3D12GraphicsCommandList* commandList, ID3D12Resource* rtvResource,
-		                            ID3D12Resource* copyResource);
+			ID3D12Resource* rtvResource,
+			ID3D12Resource* copyResource
+		);
 
 	private:
 		static constexpr uint32_t FRAME_COUNT = 3;
@@ -94,11 +81,10 @@ namespace PointCloudViewer
 
 		std::array<std::unique_ptr<RenderTexture>, FRAME_COUNT> m_swapchainRenderTargets;
 
-		std::unique_ptr<RTVGbuffer> m_gbuffer;
-		std::unique_ptr<RenderTexture> m_mainColorRenderTarget;
-
+		std::unique_ptr<ColorBuffer> m_colorBuffer;
 		std::unique_ptr<Tonemapping> m_tonemapping;
-		std::set<SharedMaterial*> m_sharedMaterials;
+
+		std::unique_ptr<PointCloudHandler> m_pointCloudHandler;
 
 		Camera* m_currentCamera;
 

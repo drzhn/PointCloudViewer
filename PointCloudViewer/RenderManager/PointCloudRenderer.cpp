@@ -110,22 +110,15 @@ namespace PointCloudViewer
 				D3D12_HEAP_TYPE_DEFAULT);
 		}
 
-		m_mainColorRenderTarget = std::make_unique<RenderTexture>(
-			m_width,
-			m_height,
-			hdrRenderTextureFormat,
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			D3D12_HEAP_TYPE_DEFAULT
-		);
-
-		m_gbuffer = std::make_unique<RTVGbuffer>(m_width, m_height);
-
+		m_colorBuffer = std::make_unique<ColorBuffer>(m_width, m_height);
 
 		m_tonemapping = std::make_unique<Tonemapping>(
 			this,
-			m_mainColorRenderTarget.get(),
+			m_colorBuffer->GetColorTexture(),
 			hdrRenderTextureFormat, swapchainFormat, depthFormat
 		);
+
+		m_pointCloudHandler = std::make_unique<PointCloudHandler>();
 
 		// IMGUI initialization
 		{
@@ -194,9 +187,7 @@ namespace PointCloudViewer
 		const auto commandList = m_queue->GetCommandList(m_currentFrameIndex);
 
 		const auto swapchainResource = m_swapchainRenderTargets[m_currentFrameIndex]->GetImageResource().Get();
-		const auto hdrRTVResource = m_mainColorRenderTarget->GetImageResource().Get();
 		const auto swapchainRTVHandle = m_swapchainRenderTargets[m_currentFrameIndex]->GetRTV()->GetCPUHandle();
-		const auto hdrRTVHandle = m_mainColorRenderTarget->GetRTV()->GetCPUHandle();
 
 		ASSERT(m_currentCamera != nullptr);
 		const math::mat4x4 mainCameraViewMatrix = m_currentCamera->GetViewMatrix();
@@ -233,60 +224,47 @@ namespace PointCloudViewer
 		// Set main viewport-scissor rects
 		GraphicsUtils::SetViewportAndScissor(commandList, m_width, m_height);
 
-		//Drawing G-Buffer
+
+		// drawing points
 		{
-			auto scopedEvent = ScopedGFXEvent(commandList, "G-BUFFER rendering");
+			m_colorBuffer->BarrierColorToWrite(commandList);
 
-			m_gbuffer->BarrierColorToWrite(commandList);
+			constexpr float clearColor[] = {0.1f, 0.1f, 0.1f, 0.0f};
+			commandList->ClearRenderTargetView(
+				m_colorBuffer->GetColorTexture()->GetRTV()->GetCPUHandle(),
+				clearColor, 0, nullptr);
 
-			const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[3] = {
-				m_gbuffer->GetColorRTV()->GetCPUHandle(),
-				m_gbuffer->GetNormalsRTV()->GetCPUHandle(),
-				m_gbuffer->GetPositionRTV()->GetCPUHandle(),
-			};
-			const auto dsvHandle = m_gbuffer->GetDepthDSV()->GetCPUHandle();
-			constexpr float clearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
-			commandList->ClearRenderTargetView(rtvHandles[0], clearColor, 0, nullptr);
-			commandList->ClearRenderTargetView(rtvHandles[1], clearColor, 0, nullptr);
-			commandList->ClearRenderTargetView(rtvHandles[2], clearColor, 0, nullptr);
-			commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+			commandList->ClearDepthStencilView(
+				m_colorBuffer->GetDepthDSV()->GetCPUHandle(),
+				D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+			const auto hdrHandle = m_colorBuffer->GetColorTexture()->GetRTV()->GetCPUHandle();
 
 			commandList->OMSetRenderTargets(
 				1,
-				&rtvHandles[0],
+				&hdrHandle,
 				FALSE, nullptr);
 
-			commandList->OMSetRenderTargets(
-				3,
-				rtvHandles,
-				FALSE, &dsvHandle);
+			auto pipeline = m_pointCloudHandler->GetGraphicsPipeline();
 
-			//RenderSceneForSharedMaterial(commandList, &mainCameraMatrixVP,
-			//                             EngineDataProvider::Get()->GetStandardPhongSharedMaterial());
+			commandList->SetPipelineState(pipeline->GetPipelineObject().Get());
+			commandList->SetGraphicsRootSignature(pipeline->GetRootSignature().Get());
+			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 
-			m_gbuffer->BarrierColorToRead(commandList);
+			GraphicsUtils::AttachView(commandList, pipeline, "points", m_pointCloudHandler->GetPointBuffer()->GetSRV());
+			GraphicsUtils::ProcessEngineBindings(commandList, pipeline, m_currentFrameIndex, nullptr,
+				&mainCameraMatrixVP);
+
+			commandList->DrawInstanced(8, 1, 0, 0);
+
+			m_colorBuffer->BarrierColorToRead(commandList);
 		}
 
-		GraphicsUtils::SetViewportAndScissor(commandList, m_width, m_height);
-
-		// Deferred shading 
-		{
-			commandList->OMSetRenderTargets(
-				1,
-				&hdrRTVHandle,
-				FALSE, nullptr);
-
-			RenderDeferredShading(commandList, m_gbuffer.get(), &mainCameraMatrixVP);
-		}
 
 		// HDR->LDR
 		{
 			auto scopedEvent = ScopedGFXEvent(commandList, "HDR->SDR transition + tonemapping");
 
-			GraphicsUtils::Barrier(commandList,
-			                       hdrRTVResource,
-			                       D3D12_RESOURCE_STATE_RENDER_TARGET,
-			                       D3D12_RESOURCE_STATE_GENERIC_READ);
 			GraphicsUtils::Barrier(commandList,
 			                       swapchainResource,
 			                       D3D12_RESOURCE_STATE_PRESENT,
@@ -300,7 +278,6 @@ namespace PointCloudViewer
 			m_tonemapping->Render(commandList, m_currentFrameIndex,
 			                      m_swapchainRenderTargets[m_currentFrameIndex].get());
 
-
 			{
 				auto scopedEvent1 = ScopedGFXEvent(commandList, "IMGUI drawings");
 
@@ -312,10 +289,6 @@ namespace PointCloudViewer
 			                       swapchainResource,
 			                       D3D12_RESOURCE_STATE_RENDER_TARGET,
 			                       D3D12_RESOURCE_STATE_PRESENT);
-			GraphicsUtils::Barrier(commandList,
-			                       hdrRTVResource,
-			                       D3D12_RESOURCE_STATE_GENERIC_READ,
-			                       D3D12_RESOURCE_STATE_RENDER_TARGET);
 		}
 
 
@@ -374,7 +347,7 @@ namespace PointCloudViewer
 				0, 0);
 		}
 		float windowPosY = 0;
-		float windowHeight = 150;
+		float windowHeight = 100;
 		ImGui::SetNextWindowPos({0, windowPosY});
 		ImGui::SetNextWindowSize({300, windowHeight});
 		{
@@ -386,7 +359,7 @@ namespace PointCloudViewer
 			ImGui::End();
 		}
 		windowPosY += windowHeight;
-		windowHeight = 75;
+		windowHeight = 150;
 		ImGui::SetNextWindowPos({0, windowPosY});
 		ImGui::SetNextWindowSize({300, windowHeight});
 		{
@@ -402,36 +375,6 @@ namespace PointCloudViewer
 
 		ImGui::Render();
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
-	}
-
-	void PointCloudRenderer::RenderDeferredShading(
-		ID3D12GraphicsCommandList* commandList,
-		const AbstractGBuffer* gBuffer,
-		const ViewProjectionMatrixData* cameraVP) const
-	{
-		const auto& sm = EngineDataProvider::Get()->GetDDGIDeferredShadingSharedMaterial();
-
-		commandList->SetPipelineState(sm->GetPipelineObject().Get());
-		commandList->SetGraphicsRootSignature(sm->GetRootSignature().Get());
-
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		GraphicsUtils::AttachView(commandList, sm, "colorTexture", gBuffer->GetColorSRV());
-		GraphicsUtils::AttachView(commandList, sm, "normalsTexture", gBuffer->GetNormalsSRV());
-		GraphicsUtils::AttachView(commandList, sm, "positionTexture", gBuffer->GetPositionSRV());
-		GraphicsUtils::AttachView(commandList, sm, "PCFSampler", EngineSamplersProvider::GetDepthPCFSampler());
-
-
-		GraphicsUtils::AttachView(commandList, sm, "linearBlackBorderSampler", EngineSamplersProvider::GetLinearBlackBorderSampler());
-
-		GraphicsUtils::ProcessEngineBindings(commandList, sm, m_currentFrameIndex,
-		                                     nullptr,
-		                                     cameraVP);
-
-		commandList->DrawIndexedInstanced(
-			3,
-			1,
-			0, 0, 0);
 	}
 
 	void PointCloudRenderer::CopyRTVResource(

@@ -53,7 +53,7 @@ namespace PointCloudViewer
 	}
 
 	ShaderSystemIncludeHandler::ShaderSystemIncludeHandler() :
-		m_shadersFolderPath(std::filesystem::absolute(R"(JoyData/shaders)").generic_string())
+		m_shadersFolderPath(std::filesystem::absolute(R"(Data/shaders)").generic_string())
 	{
 		const std::vector<char> commonEngineStructsData = ReadFile(
 			std::filesystem::absolute(R"(PointCloudViewer/CommonEngineStructs.h)").generic_string(),

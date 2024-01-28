@@ -28,19 +28,19 @@ namespace PointCloudViewer
 		const uint32_t vertexBufferOffset = static_cast<uint32_t>(m_vertexAllocator.Allocate(vertexBufferSize));
 		const uint32_t indexBufferOffset = static_cast<uint32_t>(m_indexAllocator.Allocate(indexBufferSize));
 
-		outView = {
-			.vertexBufferOffset = vertexBufferOffset,
-			.indexBufferOffset = indexBufferOffset,
-			.vertexBufferView = {
-				.BufferLocation = GetVertexBuffer()->GetBufferResource()->GetGPUVirtualAddress() + vertexBufferOffset,
-				.SizeInBytes = static_cast<uint32_t>(vertexBufferSize),
-				.StrideInBytes = sizeof(Vertex)
-			},
-			.indexBufferView = {
-				.BufferLocation = GetIndexBuffer()->GetBufferResource()->GetGPUVirtualAddress() + indexBufferOffset,
-				.SizeInBytes = static_cast<uint32_t>(indexBufferSize),
-				.Format = INDEX_FORMAT
-			}
-		};
+		//outView = {
+		//	.vertexBufferOffset = vertexBufferOffset,
+		//	.indexBufferOffset = indexBufferOffset,
+		//	.vertexBufferView = {
+		//		.BufferLocation = GetVertexBuffer()->GetBufferResource()->GetGPUVirtualAddress() + vertexBufferOffset,
+		//		.SizeInBytes = static_cast<uint32_t>(vertexBufferSize),
+		//		.StrideInBytes = sizeof(Vertex)
+		//	},
+		//	.indexBufferView = {
+		//		.BufferLocation = GetIndexBuffer()->GetBufferResource()->GetGPUVirtualAddress() + indexBufferOffset,
+		//		.SizeInBytes = static_cast<uint32_t>(indexBufferSize),
+		//		.Format = INDEX_FORMAT
+		//	}
+		//};
 	}
 }

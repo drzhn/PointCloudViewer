@@ -121,6 +121,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;Shlwapi.lib;$(SolutionDir)ThirdParty\pixruntime\bin\x64\WinPixEventRuntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <FxCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)PointCloudViewer</AdditionalIncludeDirectories>
+    </FxCompile>
+    <FxCompile>
+      <PreprocessorDefinitions>SHADER</PreprocessorDefinitions>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -141,6 +147,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d12.lib;dxgi.lib;dxguid.lib;Shlwapi.lib;$(SolutionDir)ThirdParty\pixruntime\bin\x64\WinPixEventRuntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <FxCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)PointCloudViewer</AdditionalIncludeDirectories>
+    </FxCompile>
+    <FxCompile>
+      <PreprocessorDefinitions>SHADER</PreprocessorDefinitions>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="PointCloudViewer\Common\Allocators\LinearAllocator.cpp" />
@@ -161,8 +173,9 @@
     <ClCompile Include="PointCloudViewer\MemoryManager\LinearMemoryAllocator.cpp" />
     <ClCompile Include="PointCloudViewer\MemoryManager\MemoryManager.cpp" />
     <ClCompile Include="PointCloudViewer\PointCloudViewer.cpp" />
+    <ClCompile Include="PointCloudViewer\RenderManager\ColorBuffer.cpp" />
     <ClCompile Include="PointCloudViewer\RenderManager\ComputeDispatcher.cpp" />
-    <ClCompile Include="PointCloudViewer\RenderManager\GBuffer.cpp" />
+    <ClCompile Include="PointCloudViewer\RenderManager\PointCloudHandler.cpp" />
     <ClCompile Include="PointCloudViewer\RenderManager\PointCloudRenderer.cpp" />
     <ClCompile Include="PointCloudViewer\RenderManager\Tonemapping.cpp" />
     <ClCompile Include="PointCloudViewer\ResourceManager\Buffers\Buffer.cpp" />
@@ -202,7 +215,6 @@
     <ClInclude Include="PointCloudViewer\Common\CameraUnit.h" />
     <ClInclude Include="PointCloudViewer\Common\CommandQueue.h" />
     <ClInclude Include="PointCloudViewer\Common\HashDefs.h" />
-    <ClInclude Include="PointCloudViewer\Common\JoyObject.h" />
     <ClInclude Include="PointCloudViewer\Common\Math\MathTypes.h" />
     <ClInclude Include="PointCloudViewer\Common\Math\MathUtils.h" />
     <ClInclude Include="PointCloudViewer\Common\Singleton.h" />
@@ -220,9 +232,10 @@
     <ClInclude Include="PointCloudViewer\MemoryManager\LinearMemoryAllocator.h" />
     <ClInclude Include="PointCloudViewer\MemoryManager\MemoryManager.h" />
     <ClInclude Include="PointCloudViewer\PointCloudViewer.h" />
+    <ClInclude Include="PointCloudViewer\RenderManager\ColorBuffer.h" />
     <ClInclude Include="PointCloudViewer\RenderManager\ComputeDispatcher.h" />
-    <ClInclude Include="PointCloudViewer\RenderManager\GBuffer.h" />
     <ClInclude Include="PointCloudViewer\RenderManager\IRenderer.h" />
+    <ClInclude Include="PointCloudViewer\RenderManager\PointCloudHandler.h" />
     <ClInclude Include="PointCloudViewer\RenderManager\PointCloudRenderer.h" />
     <ClInclude Include="PointCloudViewer\RenderManager\Tonemapping.h" />
     <ClInclude Include="PointCloudViewer\ResourceManager\Buffers\Buffer.h" />
@@ -253,6 +266,11 @@
     <ClInclude Include="PointCloudViewer\Utils\Log.h" />
     <ClInclude Include="PointCloudViewer\Utils\TimeCounter.h" />
     <ClInclude Include="PointCloudViewer\WindowHandler.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Data\shaders\point_cloud.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
