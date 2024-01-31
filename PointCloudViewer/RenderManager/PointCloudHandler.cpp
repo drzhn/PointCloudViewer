@@ -6,6 +6,61 @@
 #include "ThreadManager/ThreadManager.h"
 #include "Utils/TimeCounter.h"
 
+int char_to_int(char s)
+{
+	return static_cast<int>(s) - 48;
+}
+
+bool is_number(char s)
+{
+	return static_cast<int>(s) >= 48 && static_cast<int>(s) <= 57;
+}
+
+int read_floats(FILE* fp, float* out)
+{
+	int floats_read = 0;
+	int sign = 1;
+	int number = 0;
+	bool is_fraction = false;
+	int divider = 1;
+	char c = static_cast<char>(fgetc(fp));
+
+	while (c != '\n' && c != EOF)
+	{
+		if (c == '-')
+		{
+			sign = -1;
+		}
+		else if (is_number(c))
+		{
+			number = number * 10 + char_to_int(c);
+			if (is_fraction)
+			{
+				divider *= 10;
+			}
+		}
+		else if (c == '.')
+		{
+			is_fraction = true;
+		}
+		else
+		{
+			out[floats_read] = static_cast<float>(number * sign) / divider;
+			floats_read += 1;
+			sign = 1;
+			number = 0;
+			is_fraction = false;
+			divider = 1;
+		}
+
+		c = static_cast<char>(fgetc(fp));
+	}
+	out[floats_read] = static_cast<float>(number * sign) / divider;
+	floats_read++;
+
+	return floats_read;
+}
+
 PointCloudViewer::PointCloudHandler::PointCloudHandler()
 {
 	m_pointCloudBuffer = std::make_unique<UAVGpuBuffer>(
@@ -49,22 +104,18 @@ PointCloudViewer::PointCloudHandler::PointCloudHandler()
 
 	TIME_PERF_HIGHRES("File read");
 
-
-	FILE* fp;
-	fopen_s(&fp, "Data/test/stgallencathedral_station1_intensity_rgb.txt", "r");
-	fseek(fp, 0L, SEEK_END);
-	uint64_t fileSize = ftell(fp);
-	fclose(fp);
-
 	const uint32_t concurrency = ThreadManager::Get()->GetWorkersCount();
-	uint64_t fileChunk = fileSize / concurrency;
 
 	for (uint32_t workerIndex = 0; workerIndex < concurrency; workerIndex++)
 	{
-		ThreadManager::Get()->StartWorker(workerIndex, [workerIndex, fileChunk, concurrency]()
+		ThreadManager::Get()->StartWorker(workerIndex, [workerIndex, concurrency]()
 		{
 			FILE* fp;
 			fopen_s(&fp, "Data/test/stgallencathedral_station1_intensity_rgb.txt", "r");
+			fseek(fp, 0L, SEEK_END);
+			uint64_t fileSize = ftell(fp);
+			uint64_t fileChunk = fileSize / concurrency;
+
 			uint64_t startPosition = workerIndex * fileChunk;
 			if (workerIndex > 0)
 			{
@@ -77,22 +128,14 @@ PointCloudViewer::PointCloudHandler::PointCloudHandler()
 			uint64_t endPosition = (workerIndex + 1) * fileChunk;
 			if (workerIndex == concurrency)
 			{
-				endPosition = ~0;
+				endPosition = fileSize;
 			}
 
 			fseek(fp, startPosition, 0);
 
-			float x;
-			float y;
-			float z;
-			int ii;
-			int r;
-			int g;
-			int b;
-			int res;
+			float numbers[8];
 			int linesRead = 0;
-			while (
-				fscanf_s(fp, "%f %f %f %d %d %d %d", &x, &y, &z, &ii, &r, &g, &b) == 7 &&
+			while (read_floats(fp, numbers) == 7 &&
 				ftell(fp) < endPosition
 			)
 			{
