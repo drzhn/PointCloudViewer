@@ -16,16 +16,19 @@ bool is_number(char s)
 	return static_cast<int>(s) >= 48 && static_cast<int>(s) <= 57;
 }
 
-int read_floats(FILE* fp, float* out)
+int read_floats(const char* data, float* out, int& currentPosition, int endPosition)
 {
 	int floats_read = 0;
 	int sign = 1;
 	int number = 0;
 	bool is_fraction = false;
 	int divider = 1;
-	char c = static_cast<char>(fgetc(fp));
+	bool isReadingNumber = false;
 
-	while (c != '\n' && c != EOF)
+	char c = data[currentPosition];
+	currentPosition++;
+
+	while (c != '\n' && currentPosition < endPosition)
 	{
 		if (c == '-')
 		{
@@ -33,6 +36,7 @@ int read_floats(FILE* fp, float* out)
 		}
 		else if (is_number(c))
 		{
+			isReadingNumber = true;
 			number = number * 10 + char_to_int(c);
 			if (is_fraction)
 			{
@@ -45,18 +49,28 @@ int read_floats(FILE* fp, float* out)
 		}
 		else
 		{
-			out[floats_read] = static_cast<float>(number * sign) / divider;
-			floats_read += 1;
+			if (isReadingNumber)
+			{
+				out[floats_read] = static_cast<float>(number * sign) / divider;
+				floats_read += 1;
+			}
+
 			sign = 1;
 			number = 0;
 			is_fraction = false;
 			divider = 1;
+			isReadingNumber = false;
 		}
 
-		c = static_cast<char>(fgetc(fp));
+		c = data[currentPosition];
+		currentPosition++;
 	}
-	out[floats_read] = static_cast<float>(number * sign) / divider;
-	floats_read++;
+
+	if (isReadingNumber)
+	{
+		out[floats_read] = static_cast<float>(number * sign) / divider;
+		floats_read += 1;
+	}
 
 	return floats_read;
 }
@@ -67,7 +81,7 @@ PointCloudViewer::PointCloudHandler::PointCloudHandler()
 		8,
 		sizeof(Vertex)
 	);
-	Vertex data[8] = {
+	Vertex vertices[8] = {
 		{{1, 1, 1, 1}, {1, 1, 1, 1}},
 		{{1, 1, -1, 1}, {1, 1, 1, 1}},
 		{{1, -1, 1, 1}, {1, 1, 1, 1}},
@@ -78,8 +92,8 @@ PointCloudViewer::PointCloudHandler::PointCloudHandler()
 		{{-1, -1, -1, 1}, {1, 1, 1, 1}},
 	};
 	MemoryManager::Get()->LoadDataToBuffer(
-		data,
-		sizeof(data),
+		vertices,
+		sizeof(vertices),
 		m_pointCloudBuffer->GetBuffer(),
 		0
 	);
@@ -103,48 +117,72 @@ PointCloudViewer::PointCloudHandler::PointCloudHandler()
 	m_graphicsPipeline = std::make_unique<GraphicsPipeline>(args);
 
 	TIME_PERF_HIGHRES("File read");
-
 	const uint32_t concurrency = ThreadManager::Get()->GetWorkersCount();
+
+	FILE* fp;
+	fopen_s(&fp, "Data/test/stgallencathedral_station1_intensity_rgb.txt", "r");
+	//fopen_s(&fp, "Data/test/test.txt", "rb");
+	fseek(fp, 0L, SEEK_END);
+	uint64_t fileSize = ftell(fp);
+	char* data = static_cast<char*>(malloc(fileSize + 1));
+	fseek(fp, 0L, 0);
+	fread(data, fileSize, 1, fp);
+	fclose(fp);
+
+	data[fileSize] = '\n';
+	fileSize++;
+
+	std::atomic_int totalLinesRead = 0;
 
 	for (uint32_t workerIndex = 0; workerIndex < concurrency; workerIndex++)
 	{
-		ThreadManager::Get()->StartWorker(workerIndex, [workerIndex, concurrency]()
+		ThreadManager::Get()->StartWorker(workerIndex, [data, workerIndex, concurrency, fileSize, &totalLinesRead]()
 		{
-			FILE* fp;
-			fopen_s(&fp, "Data/test/stgallencathedral_station1_intensity_rgb.txt", "r");
-			fseek(fp, 0L, SEEK_END);
-			uint64_t fileSize = ftell(fp);
-			uint64_t fileChunk = fileSize / concurrency;
-
+			const uint64_t fileChunk = fileSize / concurrency;
 			uint64_t startPosition = workerIndex * fileChunk;
 			if (workerIndex > 0)
 			{
-				fseek(fp, workerIndex * fileChunk, 0);
-				while (fgetc(fp) != '\n')
+				char c;
+				do
 				{
+					c = data[startPosition];
+					startPosition++;
 				}
-				startPosition = ftell(fp);
+				while (c != '\n' && startPosition != fileSize);
 			}
 			uint64_t endPosition = (workerIndex + 1) * fileChunk;
-			if (workerIndex == concurrency)
+			if (workerIndex + 1 == concurrency)
 			{
 				endPosition = fileSize;
 			}
-
-			fseek(fp, startPosition, 0);
+			else
+			{
+				char c;
+				do
+				{
+					c = data[endPosition];
+					endPosition++;
+				}
+				while (c != '\n' && endPosition != fileSize);
+			}
 
 			float numbers[8];
 			int linesRead = 0;
-			while (read_floats(fp, numbers) == 7 &&
-				ftell(fp) < endPosition
+			int currentPosition = startPosition;
+			while (read_floats(data,
+			                   numbers,
+			                   currentPosition,
+			                   endPosition) == 7
 			)
 			{
 				linesRead++;
 			}
 			Logger::LogFormat("Lines read: %d\n", linesRead);
-			fclose(fp);
+			totalLinesRead.fetch_add(linesRead);
 		});
 	}
 
 	ThreadManager::Get()->WaitAllWorkers();
+	Logger::LogFormat("Total ines read: %d\n", totalLinesRead.load());
+	free(data);
 }
