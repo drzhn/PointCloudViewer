@@ -245,7 +245,7 @@ namespace PointCloudViewer
 				&hdrHandle,
 				FALSE, nullptr);
 
-			auto pipeline = m_pointCloudHandler->GetGraphicsPipeline();
+			const auto pipeline = m_pointCloudHandler->GetGraphicsPipeline();
 
 			commandList->SetPipelineState(pipeline->GetPipelineObject().Get());
 			commandList->SetGraphicsRootSignature(pipeline->GetRootSignature().Get());
@@ -255,7 +255,8 @@ namespace PointCloudViewer
 			GraphicsUtils::ProcessEngineBindings(commandList, pipeline, m_currentFrameIndex, nullptr,
 				&mainCameraMatrixVP);
 
-			commandList->DrawInstanced(8, 1, 0, 0);
+			commandList->DrawInstanced(
+				m_pointCloudHandler->GetPointsNumber(), 1, 0, 0);
 
 			m_colorBuffer->BarrierColorToRead(commandList);
 		}
@@ -300,8 +301,6 @@ namespace PointCloudViewer
 
 		// Present the frame.
 		ASSERT_SUCC(m_swapChain->Present(0, presentFlags));
-
-		m_trianglesCount = 0;
 	}
 
 	void PointCloudRenderer::DrawGui(ID3D12GraphicsCommandList* commandList,
@@ -353,7 +352,7 @@ namespace PointCloudViewer
 		{
 			ImGui::Begin("Stats:");
 			//ImGui::Text("Screen: %dx%d", m_width, m_height);
-			ImGui::Text("Num triangles %d", m_trianglesCount);
+			ImGui::Text("Num triangles %d", m_pointCloudHandler->GetPointsNumber());
 			const math::vec3 camPos = m_currentCamera->GetGameObject().GetTransform().GetPosition();
 			ImGui::Text("Camera: %.3f %.3f %.3f", camPos.x, camPos.y, camPos.z);
 			ImGui::End();

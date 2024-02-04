@@ -34,7 +34,7 @@ namespace PointCloudViewer
 
 		void WaitAllWorkers()
 		{
-			for (int i = 0; i < m_hardwareConcurrency; i++)
+			for (uint32_t i = 0; i < m_hardwareConcurrency; i++)
 			{
 				if (!m_workers[i].joinable())
 				{

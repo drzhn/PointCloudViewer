@@ -13,7 +13,21 @@
 
 namespace PointCloudViewer
 {
-	class PointCloudViewer;
+	struct BufferUploadPayload
+	{
+		BufferUploadPayload():
+			m_stagingBuffer(std::make_unique<Buffer>(
+				m_bufferSize,
+				D3D12_RESOURCE_STATE_GENERIC_READ,
+				D3D12_HEAP_TYPE_UPLOAD))
+
+		{
+		}
+
+		const uint64_t m_bufferSize = 64ull * 1024ull * 1024ull;
+		std::unique_ptr<Buffer> m_stagingBuffer;
+		uint64_t m_dataSize = 0;
+	};
 
 	class MemoryManager : public Singleton<MemoryManager>
 	{
@@ -22,21 +36,13 @@ namespace PointCloudViewer
 
 		void PrintStats() const;
 
-		void LoadDataToBuffer(
-			std::ifstream& stream,
-			uint64_t offset,
-			uint64_t bufferSize,
-			const Buffer* gpuBuffer) const;
+		//void LoadDataToBuffer(
+		//	std::ifstream& stream,
+		//	uint64_t offset,
+		//	uint64_t bufferSize,
+		//	const Buffer* gpuBuffer) const;
 
-		void LoadDataToBuffer(
-			void* ptr,
-			uint64_t bufferSize,
-			const Buffer* gpuBuffer, uint64_t bufferOffset) const;
-
-		void ReadbackDataFromBuffer(
-			void* ptr,
-			uint64_t bufferSize,
-			const Buffer* gpuBuffer) const;
+		void LoadDataToBuffer(const std::vector<BufferUploadPayload>& payloads, const Buffer* gpuBuffer) const;
 
 		ComPtr<ID3D12Resource> CreateResource(
 			D3D12_HEAP_TYPE heapType,
@@ -49,8 +55,7 @@ namespace PointCloudViewer
 
 		std::unique_ptr<CommandQueue> m_queue;
 		std::array<std::unique_ptr<LinearMemoryAllocator>, 5> m_allocators;
-		std::unique_ptr<Buffer> m_uploadStagingBuffer;
-		std::unique_ptr<Buffer> m_readbackStagingBuffer;
+		//std::unique_ptr<Buffer> m_uploadStagingBuffer;
 	};
 }
 

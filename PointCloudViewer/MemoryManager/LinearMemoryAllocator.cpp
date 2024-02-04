@@ -16,7 +16,6 @@ namespace PointCloudViewer
 		{
 		case DeviceAllocatorTypeGpuBuffer:
 		case DeviceAllocatorTypeCpuUploadBuffer:
-		case DeviceAllocatorTypeCpuReadbackBuffer:
 			flags =
 				D3D12_HEAP_FLAG_DENY_RT_DS_TEXTURES |
 				D3D12_HEAP_FLAG_DENY_NON_RT_DS_TEXTURES;

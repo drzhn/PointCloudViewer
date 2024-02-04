@@ -95,7 +95,6 @@ namespace PointCloudViewer
 		uint32_t m_height;
 
 		uint32_t m_imguiDescriptorIndex;
-		mutable uint32_t m_trianglesCount = 0;
 	};
 }
 

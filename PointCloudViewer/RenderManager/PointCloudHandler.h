@@ -14,10 +14,13 @@ namespace PointCloudViewer
 		PointCloudHandler();
 		[[nodiscard]] GraphicsPipeline* GetGraphicsPipeline() const noexcept { return m_graphicsPipeline.get(); }
 		[[nodiscard]] UAVGpuBuffer* GetPointBuffer() const noexcept { return m_pointCloudBuffer.get(); }
+		[[nodiscard]] uint64_t GetPointsNumber() const noexcept { return m_pointsNumber; }
 
 	private:
 		std::unique_ptr<UAVGpuBuffer> m_pointCloudBuffer;
 		std::unique_ptr<GraphicsPipeline> m_graphicsPipeline;
+
+		uint64_t m_pointsNumber = 0;
 	};
 }
 

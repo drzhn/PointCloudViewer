@@ -131,8 +131,8 @@ struct Color
 
 struct Vertex
 {
-	VEC4 position;
-	VEC4 color;
+	VEC3 position;
+	VEC3 color;
 };
 
 typedef UINT1 Index;

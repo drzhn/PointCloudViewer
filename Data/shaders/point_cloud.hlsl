@@ -16,7 +16,7 @@ StructuredBuffer<Vertex> points : register(t0);
 PSInput VSMain(uint id : SV_VertexID)
 {
 	PSInput result;
-    result.position = mul(viewProjectionData.proj, mul(viewProjectionData.view, points[id].position));
+	result.position = mul(viewProjectionData.proj, mul(viewProjectionData.view, float4(points[id].position, 1)));
 	return result;
 }
 
@@ -24,7 +24,7 @@ PSOutput PSMain(PSInput input) // : SV_TARGET
 {
 	PSOutput output;
 
-    output.Color = float4(1, 1, 1, 1);
-	
+	output.Color = float4(1, 1, 1, 1);
+
 	return output;
 }

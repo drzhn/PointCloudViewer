@@ -16,12 +16,11 @@
 #include "Utils/GraphicsUtils.h"
 #include "Utils/TimeCounter.h"
 
-#define GPU_BUFFER_ALLOCATION_SIZE (256*1024*1024) // 256 MB
-#define GPU_TEXTURE_ALLOCATION_SIZE (128*1024*1024) // 128 MB
-#define GPU_RT_DS_ALLOCATION_SIZE (128*1024*1024) // 128 MB
+#define GPU_BUFFER_ALLOCATION_SIZE (1024ull*1024ull*1024ull) // 256 MB
+#define GPU_TEXTURE_ALLOCATION_SIZE (128ull*1024ull*1024ull) // 128 MB
+#define GPU_RT_DS_ALLOCATION_SIZE (128ull*1024ull*1024ull) // 128 MB
 
-#define CPU_UPLOAD_ALLOCATION_SIZE (256*1024*1024) // 256 MB
-#define CPU_READBACK_ALLOCATION_SIZE (256*1024*1024) // 256 MB
+#define CPU_UPLOAD_ALLOCATION_SIZE (1500ull*1024ull*1024ull) // 256 MB
 
 
 namespace PointCloudViewer
@@ -81,14 +80,7 @@ namespace PointCloudViewer
 			CPU_UPLOAD_ALLOCATION_SIZE,
 			GraphicsManager::Get()->GetDevice());
 
-		m_allocators[DeviceAllocatorTypeCpuReadbackBuffer] = std::make_unique<LinearMemoryAllocator>(
-			D3D12_HEAP_TYPE_READBACK,
-			DeviceAllocatorTypeCpuReadbackBuffer,
-			CPU_READBACK_ALLOCATION_SIZE,
-			GraphicsManager::Get()->GetDevice());
-
-		m_uploadStagingBuffer = std::make_unique<Buffer>(128 * 1024 * 1024, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_HEAP_TYPE_UPLOAD);
-		m_readbackStagingBuffer = std::make_unique<Buffer>(128 * 1024 * 1024, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_HEAP_TYPE_READBACK);
+		//m_uploadStagingBuffer = std::make_unique<Buffer>(128 * 1024 * 1024, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_HEAP_TYPE_UPLOAD);
 	}
 
 	void MemoryManager::PrintStats() const
@@ -98,44 +90,6 @@ namespace PointCloudViewer
 		Logger::Log(("GPU textures allocator: " + ParseAllocatorStats(m_allocators[DeviceAllocatorTypeTextures].get())).c_str());
 		Logger::Log(("GPU RT DS textures allocator: " + ParseAllocatorStats(m_allocators[DeviceAllocatorTypeRtDsTextures].get())).c_str());
 		Logger::Log(("CPU upload buffer allocator: " + ParseAllocatorStats(m_allocators[DeviceAllocatorTypeCpuUploadBuffer].get())).c_str());
-		Logger::Log(("CPU readback buffer allocator: " + ParseAllocatorStats(m_allocators[DeviceAllocatorTypeCpuReadbackBuffer].get())).c_str());
-	}
-
-	void MemoryManager::ReadbackDataFromBuffer(
-		void* ptr,
-		uint64_t bufferSize,
-		const Buffer* gpuBuffer) const
-	{
-		m_queue->ResetForFrame();
-
-		const auto commandList = m_queue->GetCommandList(0);
-
-		const D3D12_RESOURCE_STATES state = gpuBuffer->GetCurrentResourceState();
-
-		GraphicsUtils::Barrier(commandList, gpuBuffer->GetBufferResource().Get(),
-		                       state,
-		                       D3D12_RESOURCE_STATE_COPY_SOURCE);
-
-		commandList->CopyBufferRegion(
-			m_readbackStagingBuffer->GetBufferResource().Get(),
-			0,
-			gpuBuffer->GetBufferResource().Get(),
-			0,
-			bufferSize);
-
-		GraphicsUtils::Barrier(commandList, gpuBuffer->GetBufferResource().Get(),
-		                       D3D12_RESOURCE_STATE_COPY_SOURCE,
-		                       state);
-
-		ASSERT_SUCC(commandList->Close());
-
-		m_queue->Execute(0);
-
-		m_queue->WaitQueueIdle();
-
-		const MappedAreaHandle bufferMappedPtr = m_readbackStagingBuffer->Map();
-
-		memcpy(ptr, bufferMappedPtr.GetPtr(), bufferSize);
 	}
 
 	ComPtr<ID3D12Resource> MemoryManager::CreateResource(
@@ -175,10 +129,6 @@ namespace PointCloudViewer
 		{
 			allocator = m_allocators[DeviceAllocatorTypeCpuUploadBuffer].get();
 		}
-		else if (heapType == D3D12_HEAP_TYPE_READBACK)
-		{
-			allocator = m_allocators[DeviceAllocatorTypeCpuReadbackBuffer].get();
-		}
 		else
 		{
 			ASSERT(false);
@@ -197,31 +147,59 @@ namespace PointCloudViewer
 	}
 
 
-	void MemoryManager::LoadDataToBuffer(
-		std::ifstream& stream,
-		uint64_t offset,
-		uint64_t bufferSize,
-		const Buffer* gpuBuffer) const
+	//void MemoryManager::LoadDataToBuffer(
+	//	std::ifstream& stream,
+	//	uint64_t offset,
+	//	uint64_t bufferSize,
+	//	const Buffer* gpuBuffer) const
+	//{
+	//	const MappedAreaHandle bufferMappedPtr = m_uploadStagingBuffer->Map();
+	//	stream.clear();
+	//	stream.seekg(offset);
+	//	stream.read(static_cast<char*>(bufferMappedPtr.GetPtr()), bufferSize);
+
+	//	LoadDataToBufferInternal(bufferSize, gpuBuffer, 0);
+	//}
+
+	void MemoryManager::LoadDataToBuffer(const std::vector<BufferUploadPayload>& payloads, const Buffer* gpuBuffer) const
 	{
-		const MappedAreaHandle bufferMappedPtr = m_uploadStagingBuffer->Map();
-		stream.clear();
-		stream.seekg(offset);
-		stream.read(static_cast<char*>(bufferMappedPtr.GetPtr()), bufferSize);
+		m_queue->ResetForFrame();
 
-		LoadDataToBufferInternal(bufferSize, gpuBuffer, 0);
-	}
+		const auto commandList = m_queue->GetCommandList(0);
 
-	void MemoryManager::LoadDataToBuffer(
-		void* ptr,
-		uint64_t bufferSize,
-		const Buffer* gpuBuffer,
-		uint64_t bufferOffset) const
-	{
-		const MappedAreaHandle bufferMappedPtr = m_uploadStagingBuffer->Map();
+		const D3D12_RESOURCE_STATES state = gpuBuffer->GetCurrentResourceState();
 
-		memcpy(bufferMappedPtr.GetPtr(), ptr, bufferSize);
+		GraphicsUtils::Barrier(
+			commandList,
+			gpuBuffer->GetBufferResource().Get(),
+			state,
+			D3D12_RESOURCE_STATE_COPY_DEST);
 
-		LoadDataToBufferInternal(bufferSize, gpuBuffer, bufferOffset);
+		uint64_t bufferOffset = 0;
+
+		for (int i = 0; i < payloads.size(); i++)
+		{
+			commandList->CopyBufferRegion(
+				gpuBuffer->GetBufferResource().Get(),
+				bufferOffset,
+				payloads[i].m_stagingBuffer->GetBufferResource().Get(),
+				0,
+				payloads[i].m_dataSize);
+
+			bufferOffset += payloads[i].m_dataSize;
+		}
+
+		GraphicsUtils::Barrier(
+			commandList,
+			gpuBuffer->GetBufferResource().Get(),
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			state);
+
+		ASSERT_SUCC(commandList->Close());
+
+		m_queue->Execute(0);
+
+		m_queue->WaitQueueIdle();
 	}
 
 	void MemoryManager::LoadDataToBufferInternal(
@@ -240,20 +218,24 @@ namespace PointCloudViewer
 
 		const D3D12_RESOURCE_STATES state = gpuBuffer->GetCurrentResourceState();
 
-		GraphicsUtils::Barrier(commandList, gpuBuffer->GetBufferResource().Get(),
-		                       state,
-		                       D3D12_RESOURCE_STATE_COPY_DEST);
-
-		commandList->CopyBufferRegion(
+		GraphicsUtils::Barrier(
+			commandList,
 			gpuBuffer->GetBufferResource().Get(),
-			bufferOffset,
-			m_uploadStagingBuffer->GetBufferResource().Get(),
-			0,
-			bufferSize);
+			state,
+			D3D12_RESOURCE_STATE_COPY_DEST);
 
-		GraphicsUtils::Barrier(commandList, gpuBuffer->GetBufferResource().Get(),
-		                       D3D12_RESOURCE_STATE_COPY_DEST,
-		                       state);
+		//commandList->CopyBufferRegion(
+		//	gpuBuffer->GetBufferResource().Get(),
+		//	bufferOffset,
+		//	m_uploadStagingBuffer->GetBufferResource().Get(),
+		//	0,
+		//	bufferSize);
+
+		GraphicsUtils::Barrier(
+			commandList,
+			gpuBuffer->GetBufferResource().Get(),
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			state);
 
 		ASSERT_SUCC(commandList->Close());
 
